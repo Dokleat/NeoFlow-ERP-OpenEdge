@@ -1,0 +1,173 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>NeoFlow ERP – Console</title>
+  <style>
+    :root { --bg:#fff; --fg:#000; --muted:#444; --line:#ddd; --accent:#000; }
+    * { box-sizing: border-box; }
+    body { margin:0; font:14px/1.5 system-ui, -apple-system, Segoe UI, Roboto, Arial; background:var(--bg); color:var(--fg); }
+    header { border-bottom:1px solid var(--line); padding:18px 24px; display:flex; justify-content:space-between; align-items:center; }
+    header h1 { font-size:16px; margin:0; text-transform:uppercase; letter-spacing:.06em; }
+    .container { max-width:1100px; margin:0 auto; padding:24px; }
+    .grid { display:grid; grid-template-columns:2fr 1fr; gap:24px; }
+    .card { border:1px solid var(--line); border-radius:12px; padding:18px; background:#fff; }
+    .card h2 { margin:0 0 12px; font-size:15px; letter-spacing:.03em; }
+    .toolbar { display:flex; gap:8px; align-items:center; margin-bottom:12px; }
+    input, select, button, .btn { border:1px solid var(--fg); background:#fff; color:#000; padding:8px 10px; border-radius:10px; }
+    button, .btn { cursor:pointer; }
+    button:hover, .btn:hover { filter:contrast(0.9); }
+    table { width:100%; border-collapse:collapse; }
+    th, td { border-bottom:1px solid var(--line); padding:8px 6px; text-align:left; }
+    th { font-weight:600; }
+    .muted { color:var(--muted); }
+    .pill { border:1px solid var(--fg); border-radius:999px; padding:2px 8px; font-size:12px; display:inline-block; }
+    .row { display:flex; gap:8px; align-items:center; }
+    .login { display:flex; gap:8px; align-items:center; }
+    code { background:#f7f7f7; border:1px solid var(--line); padding:2px 6px; border-radius:6px; }
+    footer { border-top:1px solid var(--line); padding:16px 24px; font-size:12px; color:var(--muted); }
+  </style>
+</head>
+<body>
+<header>
+  <h1>NeoFlow ERP</h1>
+  <div class="login">
+    <input id="username" placeholder="user" value="admin">
+    <input id="password" type="password" placeholder="password" value="ChangeMe123!">
+    <button id="loginBtn">Auth</button>
+    <span id="authState" class="muted">anonymous</span>
+  </div>
+</header>
+<div class="container">
+  <div class="grid">
+    <section class="card" id="productsCard">
+      <h2>Produkte</h2>
+      <div class="toolbar">
+        <button id="refreshProducts">Aktualisieren</button>
+      </div>
+      <table id="productsTbl">
+        <thead><tr><th>ID</th><th>SKU</th><th>Name</th><th>Preis</th><th>Aktiv</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </section>
+
+    <section class="card" id="adminCard">
+      <h2>Admin</h2>
+      <div class="row">
+        <button id="importCsv">CSV Import (ImportAll)</button>
+        <span class="muted">erfordert Basic Auth</span>
+      </div>
+      <div style="margin-top:10px" class="muted">REST: <code>POST /api/admin/import-csv</code></div>
+    </section>
+  </div>
+
+  <section class="card" style="margin-top:24px">
+    <h2>Report: Order Summary</h2>
+    <div class="toolbar">
+      <input id="from" placeholder="From (YYYY-MM-DD)" />
+      <input id="to" placeholder="To (YYYY-MM-DD)" />
+      <select id="status">
+        <option value="">Any Status</option>
+        <option>OPEN</option>
+        <option>CLOSED</option>
+      </select>
+      <button id="loadReport">Laden</button>
+    </div>
+    <table id="reportTbl">
+      <thead><tr>
+        <th>OrderId</th><th>OrderNo</th><th>Kunde</th><th>Datum</th><th>Status</th><th>Total (€)</th>
+      </tr></thead>
+      <tbody></tbody>
+    </table>
+  </section>
+</div>
+<footer>© NeoFlow ERP demo – Dokleat Halilaj</footer>
+
+<script>
+const base = ''; // served under same origin + app context
+let authHeader = null;
+
+function setAuth(u, p){
+  if(!u || !p){ authHeader=null; sessionStorage.removeItem('auth'); updateAuthState(); return; }
+  const token = btoa(u+':'+p);
+  authHeader = 'Basic '+token;
+  sessionStorage.setItem('auth', authHeader);
+  updateAuthState();
+}
+function updateAuthState(){
+  const el = document.getElementById('authState');
+  el.textContent = authHeader ? 'basic-auth enabled' : 'anonymous';
+}
+
+async function api(path, opts={}){
+  const headers = opts.headers || {};
+  if(authHeader) headers['Authorization'] = authHeader;
+  const res = await fetch(path, {...opts, headers});
+  if(!res.ok) throw new Error(res.status+' '+res.statusText);
+  const ct = res.headers.get('content-type') || '';
+  return ct.includes('application/json') ? res.json() : res.text();
+}
+
+async function loadProducts(){
+  const tb = document.querySelector('#productsTbl tbody');
+  tb.innerHTML = '<tr><td colspan="5" class="muted">lade…</td></tr>';
+  try{
+    const data = await api('/api/products');
+    tb.innerHTML = '';
+    (data || []).forEach(p => {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `<td>${p.ProdId??''}</td><td>${p.Sku??''}</td><td>${p.Name??''}</td><td>${p.Price??''}</td><td>${p.Active?'Yes':'No'}</td>`;
+      tb.appendChild(tr);
+    });
+  }catch(e){
+    tb.innerHTML = `<tr><td colspan="5" class="muted">Fehler: ${e.message}</td></tr>`;
+  }
+}
+
+async function loadReport(){
+  const f = document.getElementById('from').value.trim();
+  const t = document.getElementById('to').value.trim();
+  const s = document.getElementById('status').value;
+  const q = new URLSearchParams();
+  if(f) q.set('from', f);
+  if(t) q.set('to', t);
+  if(s) q.set('status', s);
+  const url = '/api/reports/order-summary' + (q.toString()?('?'+q.toString()):'');
+
+  const tb = document.querySelector('#reportTbl tbody');
+  tb.innerHTML = '<tr><td colspan="6" class="muted">lade…</td></tr>';
+  try{
+    const data = await api(url);
+    tb.innerHTML = '';
+    (data || []).forEach(r => {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `<td>${r.OrderId??''}</td><td>${r.OrderNo??''}</td><td>${r.CustomerName??''}</td><td>${r.DocDate??''}</td><td><span class="pill">${r.Status??''}</span></td><td>${r.TotalNet??''}</td>`;
+      tb.appendChild(tr);
+    });
+  }catch(e){
+    tb.innerHTML = `<tr><td colspan="6" class="muted">Fehler: ${e.message}</td></tr>`;
+  }
+}
+
+async function doImport(){
+  const tb = document.querySelector('#reportTbl tbody');
+  try{
+    const res = await api('/api/admin/import-csv', {method:'POST'});
+    alert('Import: OK');
+  }catch(e){
+    alert('Fehler Import: '+e.message+' (Basic Auth erforderlich?)');
+  }
+}
+
+document.getElementById('refreshProducts').addEventListener('click', loadProducts);
+document.getElementById('loadReport').addEventListener('click', loadReport);
+document.getElementById('importCsv').addEventListener('click', doImport);
+document.getElementById('loginBtn').addEventListener('click', ()=>{
+  setAuth(document.getElementById('username').value, document.getElementById('password').value);
+});
+const saved = sessionStorage.getItem('auth'); if(saved){ authHeader = saved; updateAuthState(); }
+loadProducts();
+</script>
+</body>
+</html>

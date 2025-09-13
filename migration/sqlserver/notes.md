@@ -1,0 +1,1 @@
+Export per bcp, danach CSVs in migration/import/csv-samples/ kopieren.

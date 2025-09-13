@@ -1,0 +1,22 @@
+ROUTINE-LEVEL ON ERROR UNDO, THROW.
+
+PROCEDURE ReserveStock:
+  DEFINE INPUT PARAMETER pProdId AS INTEGER NO-UNDO.
+  DEFINE INPUT PARAMETER pQty    AS DECIMAL NO-UNDO.
+
+  DO TRANSACTION ON ERROR UNDO, THROW:
+    FIND Inventory EXCLUSIVE-LOCK WHERE Inventory.ProdId = pProdId NO-ERROR.
+    IF NOT AVAILABLE Inventory THEN RETURN ERROR "Inventory not found".
+    IF Inventory.OnHand - Inventory.Reserved < pQty THEN RETURN ERROR "Insufficient stock".
+    ASSIGN Inventory.Reserved = Inventory.Reserved + pQty.
+  END.
+END PROCEDURE.
+
+PROCEDURE ReleaseStock:
+  DEFINE INPUT PARAMETER pProdId AS INTEGER NO-UNDO.
+  DEFINE INPUT PARAMETER pQty    AS DECIMAL NO-UNDO.
+  DO TRANSACTION ON ERROR UNDO, THROW:
+    FIND Inventory EXCLUSIVE-LOCK WHERE Inventory.ProdId = pProdId NO-ERROR.
+    IF AVAILABLE Inventory THEN ASSIGN Inventory.Reserved = MAX(0, Inventory.Reserved - pQty).
+  END.
+END PROCEDURE.

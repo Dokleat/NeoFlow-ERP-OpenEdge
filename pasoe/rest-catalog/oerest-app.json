@@ -1,0 +1,82 @@
+{
+  "version": "1.0",
+  "resources": [
+    {
+      "path": "/api/health",
+      "handler": "abl/bl/HealthBL.p",
+      "methods": [
+        {
+          "verb": "GET",
+          "procedure": "Health",
+          "input": "none",
+          "output": "json"
+        }
+      ]
+    },
+    {
+      "path": "/api/products",
+      "handler": "abl/bl/InventoryBL.p",
+      "methods": [
+        {
+          "verb": "GET",
+          "procedure": "GetProducts",
+          "input": "none",
+          "output": "json"
+        }
+      ]
+    },
+    {
+      "path": "/api/orders",
+      "handler": "abl/bl/OrderBL.p",
+      "methods": [
+        {
+          "verb": "POST",
+          "procedure": "PostOrder",
+          "input": "json",
+          "output": "json"
+        }
+      ]
+    },
+    {
+      "path": "/api/reports/order-summary",
+      "handler": "abl/bl/ReportsBL.p",
+      "methods": [
+        {
+          "verb": "GET",
+          "procedure": "GetOrderSummary",
+          "input": "query",
+          "output": "json",
+          "params": [
+            {
+              "name": "from",
+              "type": "string",
+              "required": false
+            },
+            {
+              "name": "to",
+              "type": "string",
+              "required": false
+            },
+            {
+              "name": "status",
+              "type": "string",
+              "required": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "path": "/api/admin/import-csv",
+      "handler": "abl/bl/AdminBL.p",
+      "methods": [
+        {
+          "verb": "POST",
+          "procedure": "ImportCsvAll",
+          "input": "none",
+          "output": "json"
+        }
+      ]
+    }
+  ]
+}

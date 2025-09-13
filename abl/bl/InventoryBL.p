@@ -1,0 +1,5 @@
+{ abl/be/ProductBE.p }
+PROCEDURE GetProducts:
+  DEFINE OUTPUT PARAMETER pJson AS LONGCHAR NO-UNDO.
+  RUN ListProductsJson (OUTPUT pJson).
+END PROCEDURE.

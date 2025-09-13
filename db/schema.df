@@ -1,0 +1,54 @@
+ADD TABLE "Product" AREA "Schema Area"
+  DUMP-NAME "Product" DESCRIPTION "Products master".
+ADD FIELD "ProdId" OF "Product" AS integer FORMAT "->,>>9" POSITION 1.
+ADD FIELD "Sku"    OF "Product" AS character FORMAT "x(30)" POSITION 2.
+ADD FIELD "Name"   OF "Product" AS character FORMAT "x(60)" POSITION 3.
+ADD FIELD "Unit"   OF "Product" AS character FORMAT "x(10)" POSITION 4.
+ADD FIELD "Price"  OF "Product" AS decimal   FORMAT "->>>,>>9.99" POSITION 5.
+ADD FIELD "Active" OF "Product" AS logical   FORMAT "Yes/No" POSITION 6.
+ADD FIELD "CreatedAt" OF "Product" AS datetime-tz FORMAT "99/99/9999 HH:MM:SS.SSS+HH:MM" POSITION 7.
+ADD INDEX "PK"    ON "Product" IS PRIMARY UNIQUE "ProdId" ASCENDING.
+ADD INDEX "Sku"   ON "Product" UNIQUE "Sku" ASCENDING.
+
+ADD TABLE "Customer" AREA "Schema Area"
+  DUMP-NAME "Customer" DESCRIPTION "Customers master".
+ADD FIELD "CustId"  OF "Customer" AS integer   FORMAT "->,>>9" POSITION 1.
+ADD FIELD "No"      OF "Customer" AS character FORMAT "x(20)" POSITION 2.
+ADD FIELD "Name"    OF "Customer" AS character FORMAT "x(80)" POSITION 3.
+ADD FIELD "Address" OF "Customer" AS character FORMAT "x(120)" POSITION 4.
+ADD FIELD "City"    OF "Customer" AS character FORMAT "x(40)" POSITION 5.
+ADD FIELD "Country" OF "Customer" AS character FORMAT "x(40)" POSITION 6.
+ADD FIELD "Email"   OF "Customer" AS character FORMAT "x(80)" POSITION 7.
+ADD INDEX "PK"      ON "Customer" IS PRIMARY UNIQUE "CustId" ASCENDING.
+ADD INDEX "No"      ON "Customer" UNIQUE "No" ASCENDING.
+
+ADD TABLE "Order" AREA "Schema Area"
+  DUMP-NAME "Order" DESCRIPTION "Sales Orders".
+ADD FIELD "OrderId"  OF "Order" AS integer   FORMAT "->,>>9" POSITION 1.
+ADD FIELD "OrderNo"  OF "Order" AS character FORMAT "x(20)" POSITION 2.
+ADD FIELD "CustId"   OF "Order" AS integer   POSITION 3.
+ADD FIELD "DocDate"  OF "Order" AS date      POSITION 4.
+ADD FIELD "Status"   OF "Order" AS character FORMAT "x(12)" POSITION 5.
+ADD FIELD "TotalNet" OF "Order" AS decimal   FORMAT "->>>,>>9.99" POSITION 6.
+ADD INDEX "PK"       ON "Order" IS PRIMARY UNIQUE "OrderId" ASCENDING.
+ADD INDEX "OrderNo"  ON "Order" UNIQUE "OrderNo" ASCENDING.
+ADD INDEX "CustId"   ON "Order" "CustId" ASCENDING.
+
+ADD TABLE "OrderLine" AREA "Schema Area"
+  DUMP-NAME "OrderLine" DESCRIPTION "Sales Order Lines".
+ADD FIELD "OrderId"   OF "OrderLine" AS integer POSITION 1.
+ADD FIELD "LineNo"    OF "OrderLine" AS integer POSITION 2.
+ADD FIELD "ProdId"    OF "OrderLine" AS integer POSITION 3.
+ADD FIELD "Qty"       OF "OrderLine" AS decimal POSITION 4.
+ADD FIELD "UnitPrice" OF "OrderLine" AS decimal POSITION 5.
+ADD FIELD "Net"       OF "OrderLine" AS decimal POSITION 6.
+ADD INDEX "PK"        ON "OrderLine" IS PRIMARY UNIQUE "OrderId" ASCENDING "LineNo" ASCENDING.
+ADD INDEX "ProdId"    ON "OrderLine" "ProdId" ASCENDING.
+
+ADD TABLE "Inventory" AREA "Schema Area"
+  DUMP-NAME "Inventory" DESCRIPTION "Inventory by Product".
+ADD FIELD "ProdId"   OF "Inventory" AS integer   POSITION 1.
+ADD FIELD "OnHand"   OF "Inventory" AS decimal   POSITION 2.
+ADD FIELD "Reserved" OF "Inventory" AS decimal   POSITION 3.
+ADD FIELD "Location" OF "Inventory" AS character FORMAT "x(20)" POSITION 4.
+ADD INDEX "PK"       ON "Inventory" IS PRIMARY UNIQUE "ProdId" ASCENDING.
