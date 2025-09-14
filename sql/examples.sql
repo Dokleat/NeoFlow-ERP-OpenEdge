@@ -1,6 +1,3 @@
-SELECT * FROM Product;
-SELECT * FROM v_order_summary ORDER BY DocDate DESC;
---------------------
 # Revenue & orders – monthly trend + YoY/perc
 WITH lines AS (
   SELECT ol."OrderId",
